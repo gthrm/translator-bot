@@ -7,6 +7,7 @@ A Telegram bot for translating between Russian and Serbian languages using AI.
 - Instant translation between Russian and Serbian
 - Three translation styles: professional, casual, aggressive
 - Automatic input language detection
+- Image-to-text recognition using GPT-4 vision capabilities
 - Uses OpenAI API for accurate translations
 - Supports both Cyrillic and Latin scripts
 
@@ -48,7 +49,8 @@ npm start
 1. Find the bot on Telegram: @YourBotUsername
 2. Start a chat and send /start
 3. Send any text in Russian or Serbian
-4. Receive the translation in three styles
+4. Or send an image containing text for recognition and translation (using GPT-4 vision model)
+5. Receive the translation in three styles
 
 ## Development
 

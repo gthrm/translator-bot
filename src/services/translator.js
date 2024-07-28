@@ -1,4 +1,4 @@
-const openai = require('./openai');
+const { openai } = require('./openai');
 const config = require('../utils/config');
 
 async function detectLanguage(text) {
