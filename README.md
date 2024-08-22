@@ -34,6 +34,7 @@ A Telegram bot for translating between Russian and Serbian languages using AI.
     OPENAI_API_KEY=your_openai_api_key
     CHAT_ID=your_chat_id
     AI_MODEL=your_chat_id
+    SUPPORT_USERNAME=telegram_user_name
    `
 
 ## Running the Bot

@@ -5,4 +5,5 @@ module.exports = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   CHAT_ID: process.env.CHAT_ID,
   AI_MODEL: process.env.AI_MODEL,
+  SUPPORT_USERNAME: process.env.SUPPORT_USERNAME,
 };
