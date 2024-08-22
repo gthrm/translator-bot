@@ -1,9 +1,9 @@
-const { openai } = require('./openai');
+const { client } = require('./openai');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 
 async function detectLanguage(text) {
-  const response = await openai.createChatCompletion({
+  const response = await client.chat.completions.create({
     model: config.AI_MODEL,
     messages: [
       { role: 'system', content: "You are a language detection assistant. Respond with only 'ru' for Russian or 'sr' for Serbian. Serbian can be written in both latin and kurilian letters." },
@@ -12,7 +12,7 @@ async function detectLanguage(text) {
     max_tokens: 5,
   });
 
-  return response.data.choices[0].message.content.trim().toLowerCase();
+  return response.choices[0].message.content.trim();
 }
 
 function getStylePrompt(style) {
@@ -52,7 +52,7 @@ async function translate(text, targetLanguage, style) {
 
   logger.info(`Prompt: ${prompt}`);
 
-  const translationsLevel1 = await openai.createChatCompletion({
+  const translationsLevel1 = await client.chat.completions.create({
     model: config.AI_MODEL,
     messages: [
       { role: 'system', content: prompt },
@@ -61,17 +61,17 @@ async function translate(text, targetLanguage, style) {
     max_tokens: config.MAX_TOKENS,
   });
 
-  const translations = await openai.createChatCompletion({
+  const translations = await client.chat.completions.create({
     model: config.AI_MODEL,
     messages: [
       { role: 'system', content: prompt },
-      { role: 'user', content: translationsLevel1.data.choices[0].message.content.trim() },
+      { role: 'user', content: translationsLevel1.choices[0].message.content.trim() },
       { role: 'system', content: 'Verify that the translation is correct. If you find any inaccuracies, make the necessary corrections and provide the revised translation. If not return the original translation.' },
     ],
     max_tokens: config.MAX_TOKENS,
   });
 
-  return translations.data.choices[0].message.content.trim();
+  return translations.choices[0].message.content.trim();
 }
 
 module.exports = { detectLanguage, translate };

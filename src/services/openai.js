@@ -1,19 +1,20 @@
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
+
+const fs = require('fs');
+const path = require('path');
 const config = require('../utils/config');
 const logger = require('../utils/logger');
 
-const configuration = new Configuration({
+const client = new OpenAI({
   apiKey: config.OPENAI_API_KEY,
 });
-
-const openai = new OpenAIApi(configuration);
 
 const NO_TEXT_FOUND = 'No text found in the image.';
 
 async function imageToText(imageUrl) {
   logger.info(`imageUrl: ${imageUrl}`);
 
-  const response = await openai.createChatCompletion({
+  const response = await client.chat.completions.create({
     model: config.AI_MODEL,
     messages: [
       {
@@ -32,7 +33,30 @@ async function imageToText(imageUrl) {
     max_tokens: config.MAX_TOKENS,
   });
 
-  return response.data.choices[0].message.content;
+  return response.choices[0].message.content;
 }
 
-module.exports = { openai, imageToText, NO_TEXT_FOUND };
+async function textToSpeech(text, outputFilename = 'speech.mp3') {
+  try {
+    const speechFile = path.resolve(outputFilename);
+
+    const mp3 = await client.audio.speech.create({
+      model: 'tts-1',
+      voice: 'alloy',
+      input: text,
+    });
+
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    await fs.promises.writeFile(speechFile, buffer);
+
+    logger.info(`Speech file created: ${speechFile}`);
+    return speechFile;
+  } catch (error) {
+    logger.error('Error creating speech file:', error);
+    throw error;
+  }
+}
+
+module.exports = {
+  client, imageToText, textToSpeech, NO_TEXT_FOUND,
+};
