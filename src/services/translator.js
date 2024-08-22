@@ -5,7 +5,7 @@ async function detectLanguage(text) {
   const response = await openai.createChatCompletion({
     model: config.AI_MODEL,
     messages: [
-      { role: 'system', content: "You are a language detection assistant. Respond with only 'ru' for Russian or 'sr' for Serbian." },
+      { role: 'system', content: "You are a language detection assistant. Respond with only 'ru' for Russian or 'sr' for Serbian. Serbian can be written in both latin and kurilian letters." },
       { role: 'user', content: `Detect the language of the following text: "${text}"` },
     ],
     max_tokens: 5,
