@@ -160,6 +160,8 @@ async function handleCallbackQuery(bot, callbackQuery) {
 
     const { text, language } = storedData;
 
+    textStore.delete(textId);
+
     try {
       await bot.answerCallbackQuery(callbackQuery.id, { text: 'Генерация аудио...' });
 
@@ -169,8 +171,6 @@ async function handleCallbackQuery(bot, callbackQuery) {
       await bot.sendAudio(chatId, speechFilePath);
 
       await fs.unlink(speechFilePath);
-
-      textStore.delete(textId);
     } catch (error) {
       logger.error('Error generating or sending audio:', error);
       await bot.sendMessage(chatId, 'Извините, произошла ошибка при генерации аудио.');
