@@ -25,7 +25,7 @@ async function translate(text, targetLanguage) {
     const response = await openai.createChatCompletion({
       model: config.AI_MODEL,
       messages: [
-        { role: 'system', content: `You are a translation assistant. ${style.prompt} Translate the given text from ${targetLanguage === 'ru' ? 'Serbian' : 'Russian'} to ${targetLanguage === 'ru' ? 'Russian' : 'Serbian'}. Respond with only the translation. Use latin letters only for Serbian. And kurilian letters only for Russian.` },
+        { role: 'system', content: `You are a translation assistant. ${style.prompt} Translate the given text from to ${targetLanguage === 'ru' ? 'Russian' : 'Serbian'}. Respond with only the translation. Use latin letters only for Serbian. And kurilian letters only for Russian.` },
         { role: 'user', content: text },
       ],
       max_tokens: 150,
