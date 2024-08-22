@@ -29,7 +29,7 @@ async function imageToText(imageUrl) {
         ],
       },
     ],
-    max_tokens: 300,
+    max_tokens: config.MAX_TOKENS,
   });
 
   return response.data.choices[0].message.content;

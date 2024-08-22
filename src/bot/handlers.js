@@ -36,6 +36,11 @@ async function showMainMenu(bot, chatId) {
 async function handleMessage(bot, msg) {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
+  const isBot = msg.from.is_bot;
+
+  if (isBot) {
+    return null;
+  }
 
   if (!rateLimiter.isAllowed(userId)) {
     return bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
@@ -85,13 +90,18 @@ async function handleMessage(bot, msg) {
       return bot.sendMessage(chatId, 'No text detected in the image for translation.');
     }
 
+    const extractedMessage = `Extracted text: ${extractedText}\n\n`;
+    await bot.sendMessage(chatId, extractedMessage);
+
     const detectedLanguage = await translator.detectLanguage(extractedText);
+    logger.info(`detectedLanguage: ${detectedLanguage}`);
+
     const targetLanguage = detectedLanguage === 'ru' ? 'sr' : 'ru';
-    const translation = await translator.translate(extractedText, targetLanguage, [{ style: selectedStyle, enabled: true }]);
+    logger.info(`targetLanguage: ${targetLanguage}`);
 
-    let responseMessage = `Extracted text: ${extractedText}\n\n`;
-    responseMessage += `${selectedStyle} translation:\n${translation[0].translation}\n`;
+    const translation = await translator.translate(extractedText, targetLanguage, selectedStyle);
 
+    const responseMessage = `${selectedStyle} translation:\n${translation}\n`;
     return bot.sendMessage(chatId, responseMessage);
   }
 
@@ -102,10 +112,9 @@ async function handleMessage(bot, msg) {
     const targetLanguage = detectedLanguage === 'ru' ? 'sr' : 'ru';
     logger.info(`targetLanguage: ${targetLanguage}`);
 
-    const translation = await translator.translate(msg.text, targetLanguage, [{ style: selectedStyle, enabled: true }]);
+    const translation = await translator.translate(msg.text, targetLanguage, selectedStyle);
 
-    let responseMessage = `Original: ${msg.text}\n\n`;
-    responseMessage += `${selectedStyle} translation:\n${translation[0].translation}\n`;
+    const responseMessage = `${selectedStyle} translation:\n${translation}\n`;
 
     return bot.sendMessage(chatId, responseMessage);
   }

@@ -6,4 +6,5 @@ module.exports = {
   CHAT_ID: process.env.CHAT_ID,
   AI_MODEL: process.env.AI_MODEL,
   SUPPORT_USERNAME: process.env.SUPPORT_USERNAME,
+  MAX_TOKENS: parseInt(process.env.MAX_TOKENS || '300', 10),
 };
