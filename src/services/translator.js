@@ -48,7 +48,7 @@ async function translate(text, targetLanguage, style) {
   logger.info(`targetLanguage: ${targetLanguage}`);
   logger.info(`style: ${style}`);
 
-  const prompt = `You are a translation assistant. Translate the given text ${getStylePrompt(style)} into  ${targetLanguage === 'ru' ? 'Russian' : 'Serbian'}, using  ${targetLanguage === 'ru' ? 'Cyrillic' : 'Latin'} script. Ensure that the translation accurately conveys the meaning of the original text and adheres to the rules of the ${targetLanguage === 'ru' ? 'Russian' : 'Serbian'} language.`;
+  const prompt = `You are a translation assistant. Translate the given text ${getStylePrompt(style)} into ${targetLanguage === 'ru' ? 'Russian' : 'Serbian'}, using ${targetLanguage === 'ru' ? 'Cyrillic' : 'Latin'} script. Ensure that the translation accurately conveys the meaning of the original text, including any strong language or offensive terms, and adheres to the rules of the ${targetLanguage === 'ru' ? 'Russian' : 'Serbian'} language. Verify that the translation is correct and faithfully represents all elements of the original text. If strong language or offensive terms are present in the original text, translate them appropriately while retaining the intended impact. Respond with only the translation.`;
 
   logger.info(`Prompt: ${prompt}`);
 
