@@ -1,4 +1,3 @@
-const config = require('./config');
 const logger = require('./logger');
 
 class RateLimiter {
@@ -18,32 +17,47 @@ class RateLimiter {
     return this.getUserData(userId)?.dayLimit || this.dayLimit;
   }
 
-  decriesDailyLimit(userId) {
-    if (this.getUserDayLimit(userId) > 0) {
+  decreaseDailyLimit(userId) {
+    const userData = this.getUserData(userId);
+    const dailyLimit = userData?.dayLimit;
+
+    if (dailyLimit && dailyLimit > 0) {
       this.getUserData(userId).dayLimit--;
     }
   }
 
   isAllowed(userId) {
     const now = Date.now();
+
     if (!this.users.has(userId)) {
       this.users.set(userId, { count: 1, lastReset: now, dayLimit: this.dayLimit });
       return true;
     }
 
-    if (this.getUserDayLimit(userId) <= 0 && !config.ADMIN_USERS.includes(userId)) {
+    const userData = this.getUserData(userId);
+
+    if (userData.dayLimit <= 0) {
       return false;
     }
 
-    const userData = this.getUserData(userId);
+    if (now - userData.lastReset > 24 * 60 * 60 * 1000) {
+      userData.count = 1;
+      userData.lastReset = now;
+      userData.dayLimit = this.dayLimit;
+
+      return true;
+    }
+
     if (now - userData.lastReset > this.timeWindow) {
       userData.count = 1;
       userData.lastReset = now;
+
       return true;
     }
 
     if (userData.count < this.limit) {
       userData.count++;
+
       return true;
     }
 

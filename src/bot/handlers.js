@@ -85,7 +85,7 @@ async function handleTranslation(bot, chatId, text, selectedStyle) {
 async function handleLimits(bot, chatId, userId) {
   const currentUserLimit = rateLimiter.getUserDayLimit(userId);
 
-  return bot.sendMessage(chatId, `Your daily limit: ${currentUserLimit}`);
+  return bot.sendMessage(chatId, `Your daily translation limit: ${currentUserLimit}`);
 }
 
 async function handleMessage(bot, msg) {
@@ -93,8 +93,8 @@ async function handleMessage(bot, msg) {
   const userId = msg.from.id;
   const isBot = msg.from.is_bot;
 
-  if (isBot || !rateLimiter.isAllowed(userId)) {
-    return isBot ? null : bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
+  if (isBot) {
+    return null;
   }
 
   const { selectedStyle } = await getTranslationOptions(userId);
@@ -120,8 +120,13 @@ async function handleMessage(bot, msg) {
       return handleLimits(bot, chatId, userId);
     }
 
+    if (!rateLimiter.isAllowed(userId)) {
+      return bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
+    }
+
+    rateLimiter.decreaseDailyLimit(userId);
+
     if (!msg.text.startsWith('/')) {
-      rateLimiter.decriesDailyLimit(userId);
       return handleTranslation(bot, chatId, msg.text, selectedStyle);
     }
   }
@@ -133,7 +138,12 @@ async function handleMessage(bot, msg) {
     if (fileInfo.file_size > 1024 * 1024 * 5) {
       return bot.sendMessage(chatId, 'The image is too large. Please send an image smaller than 5 MB.');
     }
-    rateLimiter.decriesDailyLimit(userId);
+
+    if (!rateLimiter.isAllowed(userId)) {
+      return bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
+    }
+
+    rateLimiter.decreaseDailyLimit(userId);
 
     const imageUrl = `https://api.telegram.org/file/bot${config.TELEGRAM_BOT_TOKEN}/${fileInfo.file_path}`;
     const extractedText = await imageToText(imageUrl);
@@ -163,6 +173,12 @@ async function handleCallbackQuery(bot, callbackQuery) {
   }
 
   if (data.startsWith('speak_')) {
+    if (!rateLimiter.isAllowed(userId)) {
+      return bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
+    }
+
+    rateLimiter.decreaseDailyLimit(userId);
+
     const textId = data.split('_')[1];
     const storedData = textStore.get(textId);
 

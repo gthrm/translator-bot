@@ -7,7 +7,7 @@ module.exports = {
   AI_MODEL: process.env.AI_MODEL,
   SUPPORT_USERNAME: process.env.SUPPORT_USERNAME,
   MAX_TOKENS: parseInt(process.env.MAX_TOKENS || '300', 10),
-  ADMIN_USERS: process.env.ADMIN_USERS.split(','),
+  ADMIN_USERS: (process.env.ADMIN_USERS || '').split(','),
   TIME_WINDOW: parseInt(process.env.TIME_WINDOW || '60000', 10),
   DAILY_LIMIT: parseInt(process.env.DAILY_LIMIT || '10', 10),
 };
