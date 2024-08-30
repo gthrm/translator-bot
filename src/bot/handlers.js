@@ -8,7 +8,7 @@ const { NO_TEXT_FOUND, imageToText, textToSpeech } = require('../services/openai
 const RateLimiter = require('../utils/rateLimiter');
 const { getTranslationOptions, setSelectedTranslationStyle } = require('../utils/translationOptions');
 
-const rateLimiter = new RateLimiter(10, 60 * 1000);
+const rateLimiter = new RateLimiter(10, config.TIME_WINDOW, config.DAILY_LIMIT);
 
 const textStore = new Map();
 
@@ -19,6 +19,7 @@ async function setCommands(bot) {
       { command: 'menu', description: 'Show main menu' },
       { command: 'settings', description: 'Change translation settings' },
       { command: 'help', description: 'Get help' },
+      { command: 'limit', description: 'Get daily limit' },
     ];
     const result = await bot.setMyCommands(commands);
     logger.info('Commands set successfully:', result);
@@ -33,6 +34,7 @@ async function showMainMenu(bot, chatId) {
       [{ text: '🔄 Translate' }],
       [{ text: '⚙️ Settings' }],
       [{ text: 'ℹ️ Help' }],
+      [{ text: '📶 Limits' }],
     ],
     resize_keyboard: true,
   };
@@ -68,7 +70,6 @@ async function handleTranslation(bot, chatId, text, selectedStyle) {
 
   const translatedText = await translateText(text, targetLanguage, selectedStyle);
 
-  // Генерируем уникальный идентификатор для текста
   const textId = crypto.randomBytes(16).toString('hex');
   textStore.set(textId, { text: translatedText, language: targetLanguage });
 
@@ -79,6 +80,12 @@ async function handleTranslation(bot, chatId, text, selectedStyle) {
   };
 
   return bot.sendMessage(chatId, translatedText, { reply_markup: JSON.stringify(keyboard) });
+}
+
+async function handleLimits(bot, chatId, userId) {
+  const currentUserLimit = rateLimiter.getUserDayLimit(userId);
+
+  return bot.sendMessage(chatId, `Your daily limit: ${currentUserLimit}`);
 }
 
 async function handleMessage(bot, msg) {
@@ -109,7 +116,12 @@ async function handleMessage(bot, msg) {
       return showSettingsMenu(bot, chatId, selectedStyle);
     }
 
+    if (msg.text.startsWith('/limit') || msg.text === '📶 Limits') {
+      return handleLimits(bot, chatId, userId);
+    }
+
     if (!msg.text.startsWith('/')) {
+      rateLimiter.decriesDailyLimit(userId);
       return handleTranslation(bot, chatId, msg.text, selectedStyle);
     }
   }
@@ -121,6 +133,7 @@ async function handleMessage(bot, msg) {
     if (fileInfo.file_size > 1024 * 1024 * 5) {
       return bot.sendMessage(chatId, 'The image is too large. Please send an image smaller than 5 MB.');
     }
+    rateLimiter.decriesDailyLimit(userId);
 
     const imageUrl = `https://api.telegram.org/file/bot${config.TELEGRAM_BOT_TOKEN}/${fileInfo.file_path}`;
     const extractedText = await imageToText(imageUrl);

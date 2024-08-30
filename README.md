@@ -36,6 +36,9 @@ A Telegram bot for translating between Russian and Serbian languages using AI.
     AI_MODEL=your_chat_id
     SUPPORT_USERNAME=telegram_user_name
     MAX_TOKENS=300
+    DAILY_LIMIT=10
+    ADMIN_USERS=872463756,345834856
+    TIME_WINDOW=60000
    `
 
 ## Running the Bot
