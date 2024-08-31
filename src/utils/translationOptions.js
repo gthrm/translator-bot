@@ -4,6 +4,7 @@ async function getTranslationOptions(userId) {
   let options = await db('translation_options').where({ userId }).first();
   if (!options) {
     options = { userId, selectedStyle: 'Professional' };
+
     await db('translation_options').insert(options);
   }
   return options;
