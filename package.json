@@ -1,7 +1,7 @@
 {
   "name": "translator-bot",
   "version": "1.0.0",
-  "description": "Telegram bot for translating between Serbian and English",
+  "description": "Telegram bot for translating between Serbian and Russian",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

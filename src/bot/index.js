@@ -1,6 +1,23 @@
 const handlers = require('./handlers');
 const logger = require('../utils/logger');
 
+async function setCommands(bot) {
+  try {
+    const commands = [
+      { command: 'start', description: 'Start the bot' },
+      { command: 'menu', description: 'Show main menu' },
+      { command: 'subscribe', description: 'Subscribe to the premium bot' },
+      { command: 'settings', description: 'Change translation settings' },
+      { command: 'help', description: 'Get help' },
+      { command: 'limit', description: 'Get daily limit' },
+    ];
+    const result = await bot.setMyCommands(commands);
+    logger.info('Commands set successfully:', result);
+  } catch (error) {
+    logger.error('Error setting commands:', error);
+  }
+}
+
 async function initialize(bot) {
   bot.on('message', async (msg) => {
     try {
@@ -24,7 +41,7 @@ async function initialize(bot) {
     }
   });
   try {
-    await handlers.setCommands(bot);
+    await setCommands(bot);
   } catch (error) {
     logger.error('Error setting commands:', error);
   }

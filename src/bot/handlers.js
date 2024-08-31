@@ -12,25 +12,10 @@ const rateLimiter = new RateLimiter(10, config.TIME_WINDOW, config.DAILY_LIMIT);
 
 const textStore = new Map();
 
-async function setCommands(bot) {
-  try {
-    const commands = [
-      { command: 'start', description: 'Start the bot' },
-      { command: 'menu', description: 'Show main menu' },
-      { command: 'settings', description: 'Change translation settings' },
-      { command: 'help', description: 'Get help' },
-      { command: 'limit', description: 'Get daily limit' },
-    ];
-    const result = await bot.setMyCommands(commands);
-    logger.info('Commands set successfully:', result);
-  } catch (error) {
-    logger.error('Error setting commands:', error);
-  }
-}
-
 async function showMainMenu(bot, chatId) {
   const keyboard = {
     keyboard: [
+      [{ text: '🤩 Subscribe Premium' }],
       [{ text: '🔄 Translate' }],
       [{ text: '⚙️ Settings' }],
       [{ text: 'ℹ️ Help' }],
@@ -88,6 +73,10 @@ async function handleLimits(bot, chatId, userId) {
   return bot.sendMessage(chatId, `Your daily translation limit: ${currentUserLimit}`);
 }
 
+async function handleSubscribe(bot, chatId) {
+  return bot.sendMessage(chatId, `Подпишись на наш паблик и получи больше возможностей для переводов!​ Link ${config.SUPPORT_LINK}`);
+}
+
 async function handleMessage(bot, msg) {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -118,6 +107,10 @@ async function handleMessage(bot, msg) {
 
     if (msg.text.startsWith('/limit') || msg.text === '📶 Limits') {
       return handleLimits(bot, chatId, userId);
+    }
+
+    if (msg.text.startsWith('/subscribe') || msg.text === '🤩 Subscribe Premium') {
+      return handleSubscribe(bot, chatId, userId);
     }
 
     if (!rateLimiter.isAllowed(userId)) {
@@ -209,4 +202,4 @@ async function handleCallbackQuery(bot, callbackQuery) {
   return null;
 }
 
-module.exports = { handleMessage, handleCallbackQuery, setCommands };
+module.exports = { handleMessage, handleCallbackQuery };
