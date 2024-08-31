@@ -34,6 +34,7 @@ async function showSettingsMenu(bot, chatId, selectedStyle) {
       [{ text: 'Aggressive', callback_data: 'set_aggressive' }],
     ],
   };
+
   return bot.sendMessage(
     chatId,
     `Current translation style: ${selectedStyle}\nChoose your preferred style:`,
