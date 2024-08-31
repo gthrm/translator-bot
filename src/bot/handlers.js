@@ -70,7 +70,7 @@ async function handleTranslation(bot, chatId, text, selectedStyle) {
 async function handleLimits(bot, chatId, userId) {
   const currentUserLimit = rateLimiter.getUserDayLimit(userId);
 
-  return bot.sendMessage(chatId, `Your daily translation limit: ${currentUserLimit}`);
+  return bot.sendMessage(chatId, `Your translation limit: ${currentUserLimit}`);
 }
 
 async function handleSubscribe(bot, chatId) {
