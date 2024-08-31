@@ -9,7 +9,7 @@ async function setCommands(bot) {
       { command: 'subscribe', description: 'Subscribe to the premium bot' },
       { command: 'settings', description: 'Change translation settings' },
       { command: 'help', description: 'Get help' },
-      { command: 'limit', description: 'Get daily limit' },
+      { command: 'limit', description: 'Get limit' },
     ];
 
     const result = await bot.setMyCommands(commands);
