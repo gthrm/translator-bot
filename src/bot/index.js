@@ -11,6 +11,7 @@ async function setCommands(bot) {
       { command: 'help', description: 'Get help' },
       { command: 'limit', description: 'Get daily limit' },
     ];
+
     const result = await bot.setMyCommands(commands);
     logger.info('Commands set successfully:', result);
   } catch (error) {
