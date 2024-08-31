@@ -74,7 +74,7 @@ async function handleLimits(bot, chatId, userId) {
 }
 
 async function handleSubscribe(bot, chatId) {
-  return bot.sendMessage(chatId, `Подпишись на наш паблик и получи больше возможностей для переводов!​ Link ${config.SUPPORT_LINK}`);
+  return bot.sendMessage(chatId, `Подпишись на наш паблик и получи больше возможностей для переводов! Link ${config.SUPPORT_LINK}`);
 }
 
 async function handleMessage(bot, msg) {
