@@ -41,6 +41,7 @@ async function initialize(bot) {
       bot.sendMessage(query.chat.id, 'Sorry, an error occurred. Please try again later.');
     }
   });
+
   try {
     await setCommands(bot);
   } catch (error) {
