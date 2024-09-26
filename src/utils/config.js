@@ -11,4 +11,5 @@ module.exports = {
   TIME_WINDOW: parseInt(process.env.TIME_WINDOW || '60000', 10),
   DAILY_LIMIT: parseInt(process.env.DAILY_LIMIT || '10', 10),
   SUPPORT_LINK: process.env.SUPPORT_LINK,
+  CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
 };

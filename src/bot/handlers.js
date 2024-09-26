@@ -7,6 +7,7 @@ const config = require('../utils/config');
 const { NO_TEXT_FOUND, imageToText, textToSpeech } = require('../services/openai');
 const RateLimiter = require('../utils/rateLimiter');
 const { getTranslationOptions, setSelectedTranslationStyle } = require('../utils/translationOptions');
+const { Message, EActions } = require('../clickhouse/models/Message');
 
 const rateLimiter = new RateLimiter(10, config.TIME_WINDOW, config.DAILY_LIMIT);
 
@@ -82,6 +83,26 @@ async function handleMessage(bot, msg) {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const isBot = msg.from.is_bot;
+  const user = msg.from;
+
+  try {
+    const message = {
+      chatId,
+      userId: user.id,
+      username: user.username || null,
+      firstName: user.first_name || null,
+      lastName: user.last_name || null,
+      action: EActions.MESSAGE,
+      timestamp: new Date(),
+      languageCode: user.language_code || null,
+      isPremium: user.is_premium || false,
+      isBot: user.is_bot || false,
+    };
+
+    await Message.insertMember(message);
+  } catch (error) {
+    logger.error('Error handling message:', error);
+  }
 
   if (isBot) {
     return null;

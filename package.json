@@ -9,6 +9,7 @@
     "migrate": "knex migrate:latest --knexfile src/database/knexfile.js"
   },
   "dependencies": {
+    "@clickhouse/client": "^1.6.0",
     "dotenv": "^10.0.0",
     "knex": "^3.1.0",
     "node-telegram-bot-api": "^0.54.0",
