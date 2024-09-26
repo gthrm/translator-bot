@@ -66,7 +66,7 @@ async function handleTranslation(bot, chatId, text, selectedStyle) {
     ],
   };
 
-  return bot.sendMessage(chatId, translatedText, { reply_markup: JSON.stringify(keyboard) });
+  return bot.sendMessage(chatId, translatedText, { reply_markup: JSON.stringify(keyboard), parse_mode: 'MarkdownV2' });
 }
 
 async function handleLimits(bot, chatId, userId) {
