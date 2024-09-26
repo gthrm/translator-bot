@@ -45,7 +45,7 @@ async function showSettingsMenu(bot, chatId, selectedStyle) {
 
 async function translateText(text, targetLanguage, selectedStyle) {
   const translation = await translator.translate(text, targetLanguage, selectedStyle);
-  return `${selectedStyle} translation:\n${translation}\n`;
+  return `${selectedStyle} translation:\n\```${translation}\```\n`;
 }
 
 async function handleTranslation(bot, chatId, text, selectedStyle) {
