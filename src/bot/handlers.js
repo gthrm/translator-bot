@@ -7,7 +7,9 @@ const config = require('../utils/config');
 const { NO_TEXT_FOUND, imageToText, textToSpeech } = require('../services/openai');
 const RateLimiter = require('../utils/rateLimiter');
 const { getTranslationOptions, setSelectedTranslationStyle } = require('../utils/translationOptions');
-const { Message, EActions } = require('../clickhouse/models/Message');
+const { EActions } = require('../clickhouse/models/Message');
+const { CUSTOM_EVENT_STRINGS } = require('../clickhouse/constants');
+const { logMessageEvent } = require('../clickhouse/helpers');
 
 const rateLimiter = new RateLimiter(10, config.TIME_WINDOW, config.DAILY_LIMIT);
 
@@ -48,12 +50,12 @@ async function translateText(text, targetLanguage, selectedStyle) {
   return `${selectedStyle} translation:\n\`\`\`\n${translation}\n\`\`\`\n`;
 }
 
-async function handleTranslation(bot, chatId, text, selectedStyle) {
+async function handleTranslation(bot, chatId, text, selectedStyle, logMessage) {
   const detectedLanguage = await translator.detectLanguage(text);
-  logger.info(`detectedLanguage: ${detectedLanguage}`);
+  logger.info('DETECTED_LANGUAGE', { detectedLanguage, ...logMessage });
 
   const targetLanguage = detectedLanguage === 'ru' ? 'sr' : 'ru';
-  logger.info(`targetLanguage: ${targetLanguage}`);
+  logger.info('TARGET_LANGUAGE', { targetLanguage, ...logMessage });
 
   const translatedText = await translateText(text, targetLanguage, selectedStyle);
 
@@ -85,24 +87,18 @@ async function handleMessage(bot, msg) {
   const isBot = msg.from.is_bot;
   const user = msg.from;
 
-  try {
-    const message = {
-      chatId,
-      userId: user.id,
-      username: user.username || null,
-      firstName: user.first_name || null,
-      lastName: user.last_name || null,
-      action: EActions.MESSAGE,
-      timestamp: new Date(),
-      languageCode: user.language_code || null,
-      isPremium: user.is_premium || false,
-      isBot: user.is_bot || false,
-    };
-
-    await Message.insertMember(message);
-  } catch (error) {
-    logger.error('Error handling message:', error);
-  }
+  const logMessage = {
+    chatId,
+    userId: user.id,
+    username: user.username || null,
+    firstName: user.first_name || null,
+    lastName: user.last_name || null,
+    action: EActions.MESSAGE,
+    timestamp: new Date(),
+    languageCode: user.language_code || null,
+    isPremium: user.is_premium || false,
+    isBot: user.is_bot || false,
+  };
 
   if (isBot) {
     return null;
@@ -112,37 +108,61 @@ async function handleMessage(bot, msg) {
 
   if (msg.text) {
     if (msg.text.startsWith('/start') || msg.text === '🔄 Translate') {
+      logger.info(CUSTOM_EVENT_STRINGS.COMMAND_START, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_START);
+
       return bot.sendMessage(chatId, 'Welcome! Send me a message in Russian or Serbian, or send an image containing text.');
     }
 
     if (msg.text.startsWith('/menu')) {
+      logger.info(CUSTOM_EVENT_STRINGS.COMMAND_MENU, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_MENU);
+
       return showMainMenu(bot, chatId);
     }
 
     if (msg.text.startsWith('/help') || msg.text === 'ℹ️ Help') {
+      logger.info(CUSTOM_EVENT_STRINGS.COMMAND_HELP, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_HELP);
+
       return bot.sendMessage(chatId, `For help, please contact @${config.SUPPORT_USERNAME}`);
     }
 
     if (msg.text.startsWith('/settings') || msg.text === '⚙️ Settings') {
+      logger.info(CUSTOM_EVENT_STRINGS.COMMAND_SETTINGS, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_SETTINGS);
+
       return showSettingsMenu(bot, chatId, selectedStyle);
     }
 
     if (msg.text.startsWith('/limit') || msg.text === '📶 Limits') {
+      logger.info(CUSTOM_EVENT_STRINGS.COMMAND_LIMIT, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_LIMIT);
+
       return handleLimits(bot, chatId, userId);
     }
 
     if (msg.text.startsWith('/subscribe') || msg.text === '🤩 Subscribe Premium') {
+      logger.info(CUSTOM_EVENT_STRINGS.COMMAND_SUBSCRIBE, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_SUBSCRIBE);
+
       return handleSubscribe(bot, chatId, userId);
     }
 
     if (!rateLimiter.isAllowed(userId)) {
+      logger.info(CUSTOM_EVENT_STRINGS.RATE_LIMIT_EXCEEDED, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.RATE_LIMIT_EXCEEDED);
+
       return bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
     }
 
     rateLimiter.decreaseDailyLimit(userId);
 
     if (!msg.text.startsWith('/')) {
-      return handleTranslation(bot, chatId, msg.text, selectedStyle);
+      logger.info(CUSTOM_EVENT_STRINGS.COMMAND_TRANSLATE, logMessage);
+      await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_TRANSLATE);
+
+      return handleTranslation(bot, chatId, msg.text, selectedStyle, logMessage);
     }
   }
 
@@ -150,11 +170,18 @@ async function handleMessage(bot, msg) {
     const fileId = msg.photo[msg.photo.length - 1].file_id;
     const fileInfo = await bot.getFile(fileId);
 
+    logger.info(CUSTOM_EVENT_STRINGS.COMMAND_IMAGE_TRANSLATE, logMessage);
+    await logMessageEvent(logMessage, CUSTOM_EVENT_STRINGS.COMMAND_IMAGE_TRANSLATE);
+
     if (fileInfo.file_size > 1024 * 1024 * 5) {
+      logger.error('Image too large', fileInfo, logMessage);
+
       return bot.sendMessage(chatId, 'The image is too large. Please send an image smaller than 5 MB.');
     }
 
     if (!rateLimiter.isAllowed(userId)) {
+      logger.error('Rate limit exceeded', logMessage);
+
       return bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
     }
 
@@ -164,30 +191,56 @@ async function handleMessage(bot, msg) {
     const extractedText = await imageToText(imageUrl);
 
     if (extractedText === NO_TEXT_FOUND) {
+      logger.info('No text detected', logMessage);
+
       return bot.sendMessage(chatId, 'No text detected in the image for translation.');
     }
 
     await bot.sendMessage(chatId, `Extracted text: ${extractedText}\n\n`);
-    return handleTranslation(bot, chatId, extractedText, selectedStyle);
+    return handleTranslation(bot, chatId, extractedText, selectedStyle, logMessage);
   }
+
+  logger.info('Unknown message type', logMessage);
 
   return bot.sendMessage(chatId, 'Please send a text message or an image containing text.');
 }
 
 async function handleCallbackQuery(bot, callbackQuery) {
+  const user = callbackQuery.from;
   const userId = callbackQuery.from.id;
   const chatId = callbackQuery.message.chat.id;
   const { data } = callbackQuery;
 
+  const logMessage = {
+    chatId,
+    userId: user.id,
+    username: user.username || null,
+    firstName: user.first_name || null,
+    lastName: user.last_name || null,
+    action: EActions.MESSAGE,
+    timestamp: new Date(),
+    languageCode: user.language_code || null,
+    isPremium: user.is_premium || false,
+    isBot: user.is_bot || false,
+  };
+
+  logger.info(data, logMessage);
+
   if (data.startsWith('set_')) {
+    await logMessageEvent(logMessage, data);
+
     const style = data.replace('set_', '');
     const capitalizedStyle = style.charAt(0).toUpperCase() + style.slice(1);
+
     await setSelectedTranslationStyle(userId, capitalizedStyle);
     await bot.answerCallbackQuery(callbackQuery.id, { text: `Translation style set to ${style}` });
+
     return bot.sendMessage(chatId, `Translation style has been set to ${style}.`);
   }
 
   if (data.startsWith('speak_')) {
+    await logMessageEvent(logMessage, 'speak_');
+
     if (!rateLimiter.isAllowed(userId)) {
       return bot.sendMessage(chatId, 'You have exceeded the rate limit. Please try again later.');
     }
@@ -216,7 +269,7 @@ async function handleCallbackQuery(bot, callbackQuery) {
 
       await fs.unlink(speechFilePath);
     } catch (error) {
-      logger.error('Error generating or sending audio:', error);
+      logger.error('Error generating or sending audio:', error, logMessage);
       await bot.sendMessage(chatId, 'Извините, произошла ошибка при генерации аудио.');
     }
   }

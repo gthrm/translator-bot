@@ -30,7 +30,7 @@ class Member {
     return json.data;
   }
 
-  static async insertMember(member) {
+  static async logMessageEvent(member) {
     const client = getClickHouseClient();
 
     const escapeString = (str) => str.replace(/'/g, "''");
