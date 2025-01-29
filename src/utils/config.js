@@ -12,4 +12,5 @@ module.exports = {
   DAILY_LIMIT: parseInt(process.env.DAILY_LIMIT || '10', 10),
   SUPPORT_LINK: process.env.SUPPORT_LINK,
   CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
+  GROUP_ID: process.env.GROUP_ID,
 };

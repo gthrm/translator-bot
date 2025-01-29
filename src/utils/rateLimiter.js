@@ -1,3 +1,4 @@
+const config = require('./config');
 const logger = require('./logger');
 
 class RateLimiter {
@@ -26,11 +27,30 @@ class RateLimiter {
     }
   }
 
-  isAllowed(userId) {
+  static async isUserInGroup(userId, bot) {
+    try {
+      const member = await bot.getChatMember(config.GROUP_ID, userId);
+
+      return ['member', 'administrator', 'creator'].includes(member.status);
+    } catch (error) {
+      logger.error(`isUserInGroup error: ${error.message}`);
+      return false;
+    }
+  }
+
+  async isAllowed(userId, bot) {
     const now = Date.now();
 
+    if (await RateLimiter.isUserInGroup(userId, bot)) {
+      return true;
+    }
+
     if (!this.users.has(userId)) {
-      this.users.set(userId, { count: 1, lastReset: now, dayLimit: this.dayLimit });
+      this.users.set(userId, {
+        count: 1,
+        lastReset: now,
+        dayLimit: this.dayLimit,
+      });
       return true;
     }
 
